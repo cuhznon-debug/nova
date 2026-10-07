@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: nova-social
+    runtime: node
+    plan: 0.5c-512mb
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NOVA_DATA_DIR
+        value: /var/data
+    disk:
+      name: nova-data
+      mountPath: /var/data
+      sizeGB: 1

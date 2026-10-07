@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova — Prototype 2</title>
+<style>
+:root{
+  --bg:#080a12;--panel:#0f1220;--panel2:#141827;--panel3:#191e31;
+  --border:rgba(255,255,255,.08);--text:#f4f5fb;--muted:#9298ad;
+  --accent:#8b5cf6;--accent2:#38bdf8;--success:#38d996;--danger:#fb7185;
+  --shadow:0 18px 50px rgba(0,0,0,.28);--radius:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 70% 0%,rgba(100,65,210,.14),transparent 35%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;height:100vh;overflow:hidden}
+button,input,textarea{font:inherit}
+button{cursor:pointer;color:inherit}
+.app{height:100vh;display:grid;grid-template-columns:76px 290px minmax(0,1fr) 280px}
+.rail{background:rgba(8,10,18,.9);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:18px 10px;gap:10px}
+.logo{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,#9b6cff,#35c8ff);display:grid;place-items:center;font-weight:900;font-size:21px;box-shadow:0 10px 30px rgba(113,82,246,.28);margin-bottom:14px}
+.nav{width:100%;display:flex;flex-direction:column;align-items:center;gap:7px}
+.nav button{width:52px;height:48px;border:0;background:transparent;border-radius:15px;color:#7f879e;display:grid;place-items:center;transition:.2s;position:relative}
+.nav button:hover{background:#15192a;color:#fff;transform:translateY(-1px)}
+.nav button.active{background:linear-gradient(135deg,rgba(139,92,246,.24),rgba(56,189,248,.1));color:#fff}
+.nav button.active:before{content:"";position:absolute;left:-10px;width:3px;height:22px;border-radius:99px;background:linear-gradient(#9b6cff,#38bdf8)}
+.nav svg{width:21px;height:21px}
+.rail-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.avatar{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;background:linear-gradient(135deg,#7c3aed,#0ea5e9);border:1px solid rgba(255,255,255,.1)}
+.avatar.sm{width:34px;height:34px;border-radius:11px;font-size:12px}.avatar.lg{width:74px;height:74px;border-radius:24px;font-size:24px;border:4px solid var(--panel2)}
+.status-dot{position:absolute;width:10px;height:10px;background:var(--success);border:2px solid var(--panel);border-radius:50%;right:-1px;bottom:-1px}
+.sidebar{background:rgba(15,18,32,.88);border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;min-width:0}
+.side-title{display:flex;justify-content:space-between;align-items:center;margin:0 7px 18px}
+.side-title h2{font-size:18px;margin:0}.side-title span{color:var(--muted);font-size:12px}
+.search{height:42px;background:#0a0d17;border:1px solid var(--border);border-radius:13px;display:flex;align-items:center;padding:0 12px;gap:9px;margin-bottom:14px}
+.search svg{color:#697086;width:17px}.search input{background:transparent;border:0;outline:0;color:#fff;width:100%;font-size:13px}
+.section-label{font-size:10px;color:#6f768c;text-transform:uppercase;letter-spacing:1.2px;font-weight:800;margin:14px 8px 8px}
+.conversations{overflow:auto;min-height:0}
+.conv{display:flex;align-items:center;gap:11px;padding:10px 9px;border-radius:14px;margin:2px 0;transition:.18s}
+.conv:hover{background:#171b2b}.conv.active{background:linear-gradient(90deg,rgba(139,92,246,.18),rgba(56,189,248,.05));border:1px solid rgba(139,92,246,.13)}
+.conv-info{min-width:0;flex:1}.conv-top{display:flex;justify-content:space-between;gap:6px}.conv-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.time{font-size:10px;color:#737a90;white-space:nowrap}.preview{font-size:11px;color:#777f96;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.main{display:flex;flex-direction:column;min-width:0;background:linear-gradient(180deg,rgba(20,24,39,.35),transparent)}
+.header{height:75px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:13px;background:rgba(10,12,21,.52);backdrop-filter:blur(14px)}
+.header-info{min-width:0;flex:1}.header-name{font-weight:800;font-size:15px}.header-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.header-actions{display:flex;gap:7px}.icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid var(--border);background:#111525;display:grid;place-items:center;color:#9299ad}.icon-btn:hover{color:#fff;background:#191e31}.icon-btn svg{width:17px}
+.messages{flex:1;overflow:auto;padding:26px clamp(18px,5vw,70px);scroll-behavior:smooth}
+.day{text-align:center;color:#666d82;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin:4px 0 25px;display:flex;align-items:center;gap:12px}.day:before,.day:after{content:"";height:1px;background:var(--border);flex:1}
+.message{display:flex;gap:11px;margin:0 0 20px;max-width:760px}.message.mine{margin-left:auto;flex-direction:row-reverse}.message.mine .bubble{background:linear-gradient(135deg,#6d45d9,#3978d9);border-color:transparent}.message.mine .meta{text-align:right}
+.bubble-wrap{min-width:0}.meta{font-size:10px;color:#72798d;margin:2px 3px 6px;display:flex;gap:7px;align-items:center}.meta strong{color:#dfe2eb;font-size:11px}.bubble{background:#151a2a;border:1px solid var(--border);padding:11px 14px;border-radius:6px 16px 16px 16px;color:#e9ebf2;font-size:13px;line-height:1.5;box-shadow:0 8px 25px rgba(0,0,0,.08)}.mine .bubble{border-radius:16px 6px 16px 16px}.bubble img{max-width:260px;border-radius:12px;display:block}
+.composer{padding:15px 24px 20px;border-top:1px solid var(--border);background:rgba(9,11,19,.7)}
+.composer-box{max-width:100%;display:flex;align-items:flex-end;gap:9px;background:#111525;border:1px solid var(--border);border-radius:16px;padding:8px}
+.composer textarea{resize:none;min-height:40px;max-height:130px;flex:1;background:transparent;border:0;outline:0;color:#f7f7fb;padding:9px 4px;font-size:13px;line-height:1.4}
+.send{height:40px;width:40px;border:0;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);display:grid;place-items:center}.send svg{width:17px}
+.right{background:rgba(15,18,32,.75);border-left:1px solid var(--border);padding:20px 16px;overflow:auto}
+.right-title{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:#737b90;font-weight:800;margin:5px 5px 16px}
+.profile-mini{text-align:center;padding:4px 0 22px;border-bottom:1px solid var(--border)}
+.banner-mini{height:88px;border-radius:16px;background:linear-gradient(135deg,#27184e,#154c72 55%,#11182c);margin-bottom:-38px;position:relative;overflow:hidden}
+.banner-mini:after{content:"";position:absolute;width:140px;height:140px;background:rgba(160,100,255,.3);filter:blur(35px);right:-30px;top:-50px}
+.profile-mini .avatar{margin:auto;position:relative;border:4px solid var(--panel);width:72px;height:72px;border-radius:23px;font-size:22px}
+.profile-mini h3{margin:10px 0 2px;font-size:16px}.handle{color:#838ba1;font-size:11px}.bio{color:#aeb4c5;font-size:11px;line-height:1.5;margin:10px auto;max-width:220px}
+.tags{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}.tag{background:#1b2032;border:1px solid var(--border);padding:5px 8px;border-radius:8px;font-size:9px;color:#b6bcd0}
+.member{display:flex;align-items:center;gap:9px;padding:8px 5px}.member .avatar{position:relative}.member-info{font-size:11px}.member-info b{display:block;font-size:12px}.member-info span{color:#6f768c}.online{color:var(--success)!important}
+.page{display:none;height:100%;overflow:auto;padding:32px clamp(20px,5vw,65px)}.page.active{display:block}.page h1{font-size:27px;margin:0 0 6px}.page-sub{color:var(--muted);font-size:13px;margin-bottom:26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:15px}
+.card{background:#111525;border:1px solid var(--border);border-radius:18px;padding:18px;transition:.2s;box-shadow:0 10px 30px rgba(0,0,0,.12)}.card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.28)}.group-icon{width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,#6d42d8,#1e9bc7);display:grid;place-items:center;font-size:20px;margin-bottom:15px}.card h3{margin:0 0 5px;font-size:15px}.card p{font-size:11px;color:#858da2;line-height:1.5;min-height:34px}.card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:16px}.members{font-size:10px;color:#737b90}.primary,.secondary{border:0;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700}.primary{background:linear-gradient(135deg,#8b5cf6,#477cf1)}.secondary{background:#1a2032;border:1px solid var(--border)}
+.profile-page{max-width:850px;margin:auto}.profile-cover{height:220px;border-radius:22px;background:linear-gradient(120deg,#21113d,#142a4d 52%,#10162c);position:relative;overflow:hidden;border:1px solid var(--border)}.profile-cover:before,.profile-cover:after{content:"";position:absolute;border-radius:50%;filter:blur(3px)}.profile-cover:before{width:280px;height:280px;background:rgba(139,92,246,.34);right:7%;top:-150px}.profile-cover:after{width:250px;height:250px;background:rgba(56,189,248,.24);left:8%;bottom:-170px}.profile-card{background:#111525;border:1px solid var(--border);border-radius:20px;margin-top:-45px;position:relative;padding:0 25px 25px}.profile-main{display:flex;align-items:flex-end;gap:16px}.profile-main .avatar{width:100px;height:100px;border-radius:29px;font-size:30px;border:5px solid #111525;margin-top:-50px}.profile-name{margin:0;font-size:23px}.profile-handle{color:#7e869b;font-size:12px;margin-top:3px}.edit{margin-left:auto;margin-bottom:8px}.profile-bio{color:#aeb5c7;font-size:13px;line-height:1.6;max-width:640px;margin:20px 0 14px}.profile-tags{justify-content:flex-start}.profile-links{display:flex;gap:12px;color:#9aa2b6;font-size:11px;margin-top:16px}
+.settings{max-width:720px}.setting-group{margin-bottom:24px}.setting-title{font-size:10px;text-transform:uppercase;letter-spacing:1.1px;color:#747c90;margin:0 8px 8px}.setting{background:#111525;border:1px solid var(--border);padding:16px 17px;display:flex;align-items:center;justify-content:space-between;gap:15px}.setting:first-of-type{border-radius:15px 15px 0 0}.setting:last-of-type{border-radius:0 0 15px 15px}.setting:not(:last-of-type){border-bottom:0}.setting h3{font-size:13px;margin:0 0 3px}.setting p{font-size:10px;color:#777f94;margin:0}.toggle{width:42px;height:24px;background:#292f40;border-radius:99px;padding:3px;border:0;transition:.2s;flex:none}.toggle:after{content:"";display:block;width:18px;height:18px;border-radius:50%;background:#a0a6b5;transition:.2s}.toggle.on{background:linear-gradient(135deg,#8b5cf6,#3b82f6)}.toggle.on:after{transform:translateX(18px);background:#fff}
+.toast{position:fixed;right:24px;bottom:24px;background:#171c2d;border:1px solid var(--border);padding:12px 15px;border-radius:12px;font-size:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);pointer-events:none;transition:.25s}.toast.show{opacity:1;transform:none}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);display:none;place-items:center;padding:20px;z-index:20}.modal-back.open{display:grid}.modal{width:min(560px,100%);background:#111525;border:1px solid var(--border);border-radius:22px;padding:24px;box-shadow:var(--shadow)}.modal-head{display:flex;justify-content:space-between;align-items:center}.modal h2{margin:0;font-size:18px}.close{border:0;background:#1a2032;width:32px;height:32px;border-radius:10px}.form{display:grid;gap:12px;margin-top:20px}.field label{display:block;color:#8c94a9;font-size:10px;margin:0 0 6px}.field input,.field textarea{width:100%;background:#0a0d17;border:1px solid var(--border);border-radius:11px;padding:11px;color:#fff;outline:0}.field textarea{min-height:90px;resize:vertical}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:17px}
+.mobile-only{display:none}
+@media(max-width:1050px){.app{grid-template-columns:70px 250px minmax(0,1fr)}.right{display:none}}
+@media(max-width:720px){
+  body{overflow:hidden}.app{display:block}.rail{position:fixed;z-index:10;bottom:0;left:0;right:0;height:64px;width:auto;border-right:0;border-top:1px solid var(--border);padding:6px 10px;flex-direction:row;justify-content:space-around;background:rgba(9,11,18,.95)}.logo,.rail-bottom{display:none}.nav{flex-direction:row;justify-content:space-around}.nav button{height:48px;width:48px}.nav button.active:before{display:none}.sidebar{position:fixed;z-index:8;top:0;left:0;bottom:64px;width:100%;transform:translateX(-100%);transition:.25s}.sidebar.open{transform:none}.mobile-only{display:grid}.main{height:calc(100vh - 64px)}.header{height:68px;padding:0 14px}.messages{padding:20px 13px}.composer{padding:10px 12px}.page{height:calc(100vh - 64px);padding:24px 16px}.profile-main{align-items:flex-start;flex-wrap:wrap}.edit{margin-left:0}.profile-card{padding:0 16px 20px}.profile-cover{height:170px}
+}
+
+/* Prototype 3 profile customization */
+.profile-custom-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.profile-custom-tools button{border:1px solid var(--border);background:#1a2032;border-radius:11px;padding:9px 12px;font-size:11px;font-weight:700}
+.profile-custom-tools button:hover{background:#242b42}
+.color-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-swatch{width:31px;height:31px;border-radius:10px;border:2px solid transparent;cursor:pointer}
+.color-swatch.active{border-color:#fff;box-shadow:0 0 0 2px rgba(139,92,246,.35)}
+.upload-preview{display:flex;gap:14px;align-items:center;background:#0a0d17;border:1px solid var(--border);padding:12px;border-radius:13px}
+.upload-preview .preview-banner{height:64px;flex:1;border-radius:10px;background:linear-gradient(135deg,#27184e,#154c72);background-size:cover;background-position:center}
+.customize-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.customize-grid{grid-template-columns:1fr}}
+
+/* Prototype 4 social layer */
+.social-search{display:flex;gap:10px;margin-bottom:18px}
+.social-search .search{flex:1;margin:0}
+.user-card{display:flex;align-items:center;gap:13px;padding:15px;background:#111525;border:1px solid var(--border);border-radius:16px}
+.user-card-info{flex:1;min-width:0}.user-card-info h3{margin:0 0 3px;font-size:14px}.user-card-info p{margin:0;color:#777f94;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-actions{display:flex;gap:7px}.friend-status{font-size:10px;color:#7f879b}
+.requests{display:grid;gap:9px;margin-bottom:25px}
+.request{display:flex;align-items:center;gap:11px;padding:11px 12px;background:#111525;border:1px solid var(--border);border-radius:14px}
+.request-info{flex:1}.request-info b{font-size:12px}.request-info span{display:block;color:#747c91;font-size:10px;margin-top:2px}
+.request-actions{display:flex;gap:5px}.request-actions button{padding:7px 9px;border-radius:9px;border:0;font-size:10px;font-weight:700}
+.accept{background:linear-gradient(135deg,#8b5cf6,#3b82f6)}.decline{background:#1b2030;color:#9299ad}
+.social-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#737b90;font-weight:800;margin:18px 0 9px}
+.friend-pill{display:flex;align-items:center;gap:9px;padding:8px 4px}
+.friend-pill .avatar{width:34px;height:34px;border-radius:11px}
+.empty-social{padding:28px;text-align:center;color:#71798e;background:#111525;border:1px dashed var(--border);border-radius:16px;font-size:11px}
+</style>
+
+<style>
+/* Prototype 5 account layer */
+.auth-backdrop{position:fixed;inset:0;z-index:1000;background:rgba(5,7,13,.86);backdrop-filter:blur(18px);display:grid;place-items:center;padding:20px}
+.auth-backdrop.hidden{display:none}.auth-card{width:min(430px,100%);background:#101421;border:1px solid var(--border);border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.5)}
+.auth-logo{font-size:27px;font-weight:900;letter-spacing:-1.5px;margin-bottom:6px}.auth-logo span{color:var(--accent)}.auth-sub{color:#858da2;font-size:12px;margin-bottom:22px}.auth-tabs{display:flex;background:#171c2b;border-radius:12px;padding:4px;margin-bottom:18px}.auth-tabs button{flex:1;border:0;background:transparent;color:#8d95aa;padding:10px;border-radius:9px;font-weight:800;font-size:12px}.auth-tabs button.active{background:#252c41;color:#fff}.auth-form{display:grid;gap:11px}.auth-form label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#737c92;font-weight:800}.auth-form input{width:100%;box-sizing:border-box;background:#0b0f19;border:1px solid #252c3d;color:#fff;border-radius:11px;padding:12px 13px;outline:none}.auth-form input:focus{border-color:var(--accent)}.auth-error{color:#fb7185;font-size:11px;min-height:15px}.auth-demo{margin-top:17px;padding-top:16px;border-top:1px solid var(--border);font-size:10px;color:#727b91;line-height:1.7}.auth-demo b{color:#aeb6c9}.account-chip{display:flex;align-items:center;gap:8px;margin:12px 8px 0;padding:9px;background:#141a29;border:1px solid var(--border);border-radius:13px;cursor:pointer}.account-chip .avatar{width:31px;height:31px;border-radius:10px;font-size:10px}.account-chip .account-text{min-width:0;flex:1}.account-chip strong{display:block;font-size:11px}.account-chip span{display:block;color:#70798e;font-size:9px}.account-chip .logout-mini{font-size:10px;color:#9aa2b5}
+</style>
+</head>
+<body>
+<div id="authOverlay" class="auth-backdrop">
+  <div class="auth-card">
+    <div class="auth-logo">N<span>O</span>VA</div>
+    <div class="auth-sub">Your social space, persisted locally.</div>
+    <div class="auth-tabs"><button id="loginTab" class="active">Log in</button><button id="signupTab">Sign up</button></div>
+    <form id="authForm" class="auth-form">
+      <div id="authNameWrap" style="display:none"><label>Display name</label><input id="authName" autocomplete="name" placeholder="Your name"></div>
+      <div><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+      <div><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters" required></div>
+      <div id="authHandleWrap" style="display:none"><label>Handle</label><input id="authHandle" placeholder="yourhandle"></div>
+      <div class="auth-error" id="authError"></div>
+      <button class="primary" id="authSubmit" type="submit">Log in</button>
+    </form>
+    <div class="auth-demo"><b>Demo accounts</b><br>Edwin · edwin@nova.local &nbsp;|&nbsp; Mika · mika@nova.local &nbsp;|&nbsp; Jay · jay@nova.local<br>Kai · kai@nova.local &nbsp;|&nbsp; Luna · luna@nova.local<br>Demo passwords: <b>nova123</b></div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="rail">
+    <div class="logo">N</div>
+    <nav class="nav">
+      <button class="active" data-page="messages" title="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.6 8.6 0 0 1-3.3-.7L4 20l1.7-3.8A7.4 7.4 0 0 1 4 11.5C4 7.4 7.6 4 12 4s8 3.4 8 7.5Z"/></svg></button>
+      <button data-page="groups" title="Groups"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 20v-1.7a3.3 3.3 0 0 0-3.3-3.3H6.3A3.3 3.3 0 0 0 3 18.3V20M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM17 11a3 3 0 1 0 0-6M15.5 15.2a3.3 3.3 0 0 1 5.5 2.4V20"/></svg></button>
+      <button data-page="friends" title="Friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 20v-1.7a3.3 3.3 0 0 0-3.3-3.3H6.3A3.3 3.3 0 0 0 3 18.3V20M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM17 11a3 3 0 1 0 0-6M15.5 15.2a3.3 3.3 0 0 1 5.5 2.4V20"/></svg></button>
+      <button data-page="profile" title="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></button>
+      <button data-page="settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 1.3v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-1.3l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-1.3-3H3.3a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 1.3-3l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-1.3v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 1.3l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 1.3 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-1.3 3Z"/></svg></button>
+    </nav>
+    <div class="rail-bottom"><button class="avatar" id="railProfile">E</button></div>
+  </aside>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="side-title"><h2>Messages</h2><span id="onlineCount">4 online</span></div>
+    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="chatSearch" placeholder="Search chats..."></div>
+    <div class="section-label">Conversations</div>
+    <div class="conversations" id="conversationList"></div>
+    <div class="section-label">Groups</div>
+    <div class="conversations" id="groupList"></div>
+  </aside>
+
+  <main class="main">
+    <section id="messagesPage" class="page active" style="padding:0;overflow:hidden">
+      <header class="header">
+        <button class="icon-btn mobile-only" id="menuBtn">☰</button>
+        <div class="avatar sm" id="headerAvatar">M</div>
+        <div class="header-info"><div class="header-name" id="headerName">Mika</div><div class="header-sub" id="headerSub">Online now</div></div>
+        <div class="header-actions"><button class="icon-btn" title="Notifications">♡</button><button class="icon-btn" id="infoBtn" title="Details">i</button></div>
+      </header>
+      <div class="messages" id="messages"></div>
+      <div class="composer">
+        <div class="composer-box"><button class="icon-btn" title="Add">+</button><textarea id="composer" rows="1" placeholder="Message Mika..."></textarea><button class="send" id="sendBtn" title="Send"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="m4 4 16 8-16 8 3-8-3-8Z"/><path d="M7 12h13"/></svg></button></div>
+      </div>
+    </section>
+
+    <section id="groupsPage" class="page">
+      <h1>Groups</h1><div class="page-sub">Find your people, join conversations, and build your own spaces.</div>
+      <div class="grid" id="groupsGrid"></div>
+    </section>
+
+    <section id="friendsPage" class="page">
+      <div style="max-width:900px;margin:auto">
+        <h1>Friends</h1><div class="page-sub">Find people, send requests, and keep up with your Nova circle.</div>
+        <div class="social-search">
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="userSearch" placeholder="Search people by name or @handle..."></div>
+        </div>
+        <div class="social-section-title">Friend requests</div>
+        <div class="requests" id="requests"></div>
+        <div class="social-section-title">Your friends</div>
+        <div class="grid" id="friendsGrid"></div>
+        <div class="social-section-title">Discover people</div>
+        <div class="grid" id="discoverGrid"></div>
+      </div>
+    </section>
+
+    <section id="profilePage" class="page">
+      <div class="profile-page">
+        <h1>Profile</h1><div class="page-sub">Your Nova identity, your way.</div>
+        <div class="profile-cover"></div>
+        <div class="profile-card">
+          <div class="profile-main"><div class="avatar">E</div><div><h2 class="profile-name" id="profileName">Edwin</h2><div class="profile-handle" id="profileHandle">@edwin</div></div><button class="primary edit" id="editProfile">Edit Profile</button></div>
+          <div class="profile-bio" id="profileBio">just building cool stuff ✦ anime • gaming • music</div>
+          <div class="tags profile-tags" id="profileTags"><span class="tag">Gaming</span><span class="tag">Creator</span><span class="tag">Custom Profile</span></div>
+          <div class="profile-links"><span>✦ novaproject</span><span>↗ portfolio</span></div>
+<div class="profile-custom-tools">
+<button id="customizeProfile">✦ Customize profile</button>
+<button id="changeAvatar">◎ Change photo</button>
+<button id="changeBanner">▧ Change banner</button>
+<input id="avatarFile" type="file" accept="image/*" hidden>
+<input id="bannerFile" type="file" accept="image/*" hidden>
+</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="settingsPage" class="page">
+      <div class="settings"><h1>Settings</h1><div class="page-sub">Tune Nova to feel like yours.</div>
+        <div class="setting-group"><div class="setting-title">Experience</div>
+          <div class="setting"><div><h3>Notifications</h3><p>Get notified about new messages and mentions.</p></div><button class="toggle on" data-setting="notifications"></button></div>
+          <div class="setting"><div><h3>Online status</h3><p>Show friends when you're active.</p></div><button class="toggle on" data-setting="online"></button></div>
+          <div class="setting"><div><h3>Message sounds</h3><p>Play a sound when a new message arrives.</p></div><button class="toggle on" data-setting="sounds"></button></div>
+          <div class="setting"><div><h3>Compact mode</h3><p>Use tighter spacing throughout conversations.</p></div><button class="toggle" data-setting="compact"></button></div>
+          <div class="setting"><div><h3>Dark appearance</h3><p>Keep Nova in its dark visual theme.</p></div><button class="toggle on" data-setting="dark"></button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="right" id="rightPanel">
+    <div class="right-title" id="rightTitle">Profile</div>
+    <div id="rightContent"></div>
+  </aside>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-back" id="modalBack">
+  <div class="modal">
+    <div class="modal-head"><h2>Edit Profile</h2><button class="close" id="closeModal">×</button></div>
+    <div class="form">
+      <div class="customize-grid">
+        <div class="field"><label>DISPLAY NAME</label><input id="editName" value="Edwin"></div>
+        <div class="field"><label>HANDLE</label><input id="editHandle" value="edwin"></div>
+      </div>
+      <div class="field"><label>BIO</label><textarea id="editBio">just building cool stuff ✦ anime • gaming • music</textarea></div>
+      <div class="field"><label>INTERESTS (comma separated)</label><input id="editTags" value="Gaming, Creator, Custom Profile"></div>
+      <div class="field"><label>PROFILE ACCENT</label>
+        <div class="color-row" id="profileColors">
+          <button class="color-swatch active" data-accent="#8b5cf6" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6)"></button>
+          <button class="color-swatch" data-accent="#06b6d4" style="background:linear-gradient(135deg,#06b6d4,#3b82f6)"></button>
+          <button class="color-swatch" data-accent="#ec4899" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)"></button>
+          <button class="color-swatch" data-accent="#10b981" style="background:linear-gradient(135deg,#10b981,#14b8a6)"></button>
+          <button class="color-swatch" data-accent="#f97316" style="background:linear-gradient(135deg,#f97316,#ef4444)"></button>
+        </div>
+      </div>
+      <div class="upload-preview"><div class="avatar" id="avatarPreview">E</div><div class="preview-banner" id="bannerPreview"></div></div>
+    </div>
+    <div class="modal-actions"><button class="secondary" id="cancelModal">Cancel</button><button class="primary" id="saveProfile">Save changes</button></div>
+  </div>
+</div>
+
+<script>
+const icons={};
+const users={
+  mika:{name:"Mika",handle:"@mika",initial:"M",online:true,gradient:"linear-gradient(135deg,#f97316,#ec4899)",bio:"anime, art & late-night conversations ✦"},
+  jay:{name:"Jay",handle:"@jay",initial:"J",online:true,gradient:"linear-gradient(135deg,#2563eb,#06b6d4)",bio:"building things and breaking them again."},
+  kai:{name:"Kai",handle:"@kai",initial:"K",online:false,gradient:"linear-gradient(135deg,#10b981,#14b8a6)",bio:"music / games / good vibes"},
+  luna:{name:"Luna",handle:"@luna",initial:"L",online:true,gradient:"linear-gradient(135deg,#a855f7,#ec4899)",bio:"soft chaos ✦"},
+  edwin:{name:"Edwin",handle:"@edwin",initial:"E",online:true,gradient:"linear-gradient(135deg,#7c3aed,#0ea5e9)",bio:"just building cool stuff ✦ anime • gaming • music"}
+};
+const groups=[
+ {id:"anime",name:"Anime Hub",icon:"✦",desc:"Talk seasons, characters, theories and everything anime.",members:284},
+ {id:"gaming",name:"Gaming Squad",icon:"⌁",desc:"Game nights, clips, builds and competitive chaos.",members:128},
+ {id:"music",name:"Music Room",icon:"♫",desc:"Share what you're listening to and discover new sounds.",members:96},
+ {id:"creators",name:"Creators",icon:"✎",desc:"A creative corner for artists, editors and makers.",members:73},
+ {id:"late",name:"Late Night",icon:"☾",desc:"For conversations that somehow last until sunrise.",members:61},
+ {id:"tech",name:"Tech Lab",icon:"⌘",desc:"Build, experiment, troubleshoot and ship cool stuff.",members:112}
+];
+let conversations=[
+ {id:"mika",type:"dm",user:"mika",messages:[["mika","Hey! You finally made Nova? 👀","10:14 PM"],["edwin","Yep 😭 Prototype 2 is alive.","10:15 PM"],["mika","Okay wait, this actually looks so clean.","10:16 PM"],["edwin","I'm trying to make it feel like its own thing.","10:17 PM"]]},
+ {id:"jay",type:"dm",user:"jay",messages:[["jay","You still working on that app?","Yesterday"],["edwin","Always. Never escaping the build loop lol","Yesterday"]]},
+ {id:"luna",type:"dm",user:"luna",messages:[["luna","Late night Nova testing?","Mon"],["edwin","Obviously.","Mon"]]},
+ {id:"kai",type:"dm",user:"kai",messages:[["kai","Send me that playlist when you get a chance.","Sun"]]},
+ {id:"anime",type:"group",name:"Anime Hub",messages:[["mika","Anyone watching the new season?","9:42 PM"],["jay","I started it yesterday. No spoilers pls 😭","9:45 PM"],["luna","Too late, I already finished it.","9:48 PM"]]}
+];
+let selected="mika";
+let profile={name:"Edwin",handle:"edwin",bio:"just building cool stuff ✦ anime • gaming • music",tags:["Gaming","Creator","Custom Profile"]};
+
+function avatarHTML(user,cls="sm"){
+ const u=users[user]||users.edwin;
+ return `<div class="avatar ${cls}" style="background:${u.gradient};position:relative">${u.initial}${u.online&&cls!=="lg"?'<i class="status-dot"></i>':''}</div>`;
+}
+function renderConversations(filter=""){
+ const list=document.getElementById("conversationList");
+ list.innerHTML=conversations.filter(c=>c.type==="dm").filter(c=>(users[c.user].name+" "+users[c.user].handle).toLowerCase().includes(filter.toLowerCase())).map(c=>{
+   const u=users[c.user], last=c.messages[c.messages.length-1];
+   return `<div class="conv ${selected===c.id?"active":""}" data-conv="${c.id}">${avatarHTML(c.user)}<div class="conv-info"><div class="conv-top"><span class="conv-name">${u.name}</span><span class="time">${last?.[2]||""}</span></div><div class="preview">${last?.[1]||""}</div></div></div>`;
+ }).join("");
+ document.getElementById("groupList").innerHTML=conversations.filter(c=>c.type==="group").map(c=>{
+   const g=groups.find(x=>x.id===c.id);const last=c.messages[c.messages.length-1];
+   return `<div class="conv ${selected===c.id?"active":""}" data-conv="${c.id}"><div class="avatar sm" style="background:linear-gradient(135deg,#6d42d8,#1e9bc7)">${g.icon}</div><div class="conv-info"><div class="conv-top"><span class="conv-name">${g.name}</span><span class="time">${last?.[2]||""}</span></div><div class="preview">${last?.[1]||""}</div></div></div>`;
+ }).join("");
+ document.querySelectorAll("[data-conv]").forEach(x=>x.onclick=()=>selectConversation(x.dataset.conv));
+}
+function selectConversation(id){
+ selected=id;
+ const c=conversations.find(x=>x.id===id); if(!c)return;
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById("messagesPage").classList.add("active");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page==="messages"));
+ const isGroup=c.type==="group";const u=isGroup?null:users[c.user];
+ document.getElementById("headerAvatar").textContent=isGroup?groups.find(g=>g.id===id).icon:u.initial;
+ document.getElementById("headerAvatar").style.background=isGroup?"linear-gradient(135deg,#6d42d8,#1e9bc7)":u.gradient;
+ document.getElementById("headerName").textContent=isGroup?groups.find(g=>g.id===id).name:u.name;
+ document.getElementById("headerSub").textContent=isGroup?`${groups.find(g=>g.id===id).members} members · active now`:(u.online?"Online now":"Last seen recently");
+ document.getElementById("composer").placeholder=`Message ${isGroup?groups.find(g=>g.id===id).name:u.name}...`;
+ renderMessages();renderConversations(document.getElementById("chatSearch").value);renderRight();
+ document.getElementById("sidebar").classList.remove("open");
+}
+function renderMessages(){
+ const c=conversations.find(x=>x.id===selected);const box=document.getElementById("messages");
+ box.innerHTML='<div class="day">Today</div>'+c.messages.map(m=>{
+   const [who,text,time]=m;const mine=who==="edwin";const u=users[who]||users.edwin;
+   return `<div class="message ${mine?"mine":""}">${avatarHTML(who)}<div class="bubble-wrap"><div class="meta"><strong>${u.name}</strong><span>${time}</span></div><div class="bubble">${escapeHTML(text)}</div></div></div>`;
+ }).join("");
+ box.scrollTop=box.scrollHeight;
+}
+function renderRight(){
+ const c=conversations.find(x=>x.id===selected);const title=document.getElementById("rightTitle"),content=document.getElementById("rightContent");
+ if(c.type==="group"){
+  const g=groups.find(x=>x.id===c.id);title.textContent="Group";content.innerHTML=`<div class="profile-mini"><div class="banner-mini"></div><div class="avatar" style="background:linear-gradient(135deg,#6d42d8,#1e9bc7);margin:auto;position:relative">${g.icon}</div><h3>${g.name}</h3><div class="handle">${g.members} members</div><div class="bio">${g.desc}</div><div class="tags"><span class="tag">Community</span><span class="tag">Public</span></div></div><div class="right-title" style="margin-top:22px">Members</div>${["mika","jay","luna","kai","edwin"].map(id=>`<div class="member">${avatarHTML(id)}<div class="member-info"><b>${users[id].name}</b><span class="${users[id].online?"online":""}">${users[id].online?"Online":"Offline"}</span></div></div>`).join("")}`;
+ }else{
+  const u=users[c.user];title.textContent="About";content.innerHTML=`<div class="profile-mini"><div class="banner-mini"></div>${avatarHTML(c.user,"lg")}<h3>${u.name}</h3><div class="handle">${u.handle}</div><div class="bio">${u.bio}</div><div class="tags"><span class="tag">Friend</span><span class="tag">${u.online?"Online":"Offline"}</span></div></div><div class="right-title" style="margin-top:22px">Details</div><div style="font-size:11px;color:#7f879c;padding:0 5px;line-height:1.8">Nova member<br>Joined recently<br>Notifications enabled</div>`;
+ }
+}
+function renderGroups(){
+ document.getElementById("groupsGrid").innerHTML=groups.map(g=>`<div class="card"><div class="group-icon">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="card-foot"><span class="members">${g.members} members</span><button class="primary join" data-group="${g.id}">Join</button></div></div>`).join("");
+ document.querySelectorAll(".join").forEach(btn=>btn.onclick=()=>{btn.textContent=btn.textContent==="Joined"?"Join":"Joined";btn.classList.toggle("secondary");btn.classList.toggle("primary");showToast(btn.textContent==="Joined"?"Joined group":"Left group");});
+}
+
+let friends=["mika"];
+let requests=["luna"];
+let sentRequests=[];
+
+function userCard(id,mode){
+ const u=users[id];
+ let action="";
+ if(mode==="friend") action=`<button class="secondary" onclick="openDM('${id}')">Message</button>`;
+ else if(friends.includes(id)) action=`<span class="friend-status">Friends ✓</span>`;
+ else if(sentRequests.includes(id)) action=`<span class="friend-status">Request sent</span>`;
+ else action=`<button class="primary" onclick="sendFriendRequest('${id}')">Add friend</button>`;
+ return `<div class="user-card">${avatarHTML(id,"lg")}<div class="user-card-info"><h3>${u.name}</h3><p>${u.handle} · ${u.bio}</p></div><div class="user-actions">${action}</div></div>`;
+}
+function renderSocial(filter=""){
+ const q=filter.toLowerCase().replace(/^@/,"");
+ const people=Object.keys(users).filter(id=>id!=="edwin"&&(users[id].name.toLowerCase().includes(q)||users[id].handle.toLowerCase().includes(q)));
+ const req=document.getElementById("requests");
+ req.innerHTML=requests.map(id=>`<div class="request">${avatarHTML(id)}<div class="request-info"><b>${users[id].name}</b><span>${users[id].handle} wants to be your friend</span></div><div class="request-actions"><button class="accept" onclick="acceptRequest('${id}')">Accept</button><button class="decline" onclick="declineRequest('${id}')">Decline</button></div></div>`).join("")||'<div class="empty-social">No pending friend requests.</div>';
+ document.getElementById("friendsGrid").innerHTML=friends.map(id=>userCard(id,"friend")).join("")||'<div class="empty-social">Your friend list is empty.</div>';
+ const discover=people.filter(id=>!friends.includes(id)&&!requests.includes(id));
+ document.getElementById("discoverGrid").innerHTML=discover.map(id=>userCard(id,"discover")).join("")||'<div class="empty-social">No people found.</div>';
+}
+function sendFriendRequest(id){
+ if(!sentRequests.includes(id))sentRequests.push(id);
+ renderSocial(document.getElementById("userSearch").value);showToast(`Friend request sent to ${users[id].name}`);
+}
+function acceptRequest(id){
+ requests=requests.filter(x=>x!==id);if(!friends.includes(id))friends.push(id);
+ renderSocial(document.getElementById("userSearch").value);showToast(`${users[id].name} is now your friend`);
+}
+function declineRequest(id){
+ requests=requests.filter(x=>x!==id);renderSocial(document.getElementById("userSearch").value);showToast("Request declined");
+}
+function openDM(id){
+ if(!conversations.some(c=>c.id===id)){
+   conversations.push({id,type:"dm",user:id,messages:[[id,`Hey! You can message me here on Nova. 👋`,"Now"]]});
+ }
+ selectConversation(id);
+}
+function nav(page){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById(page+"Page").classList.add("active");
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===page));
+ if(page==="groups")renderGroups();
+ if(page==="friends")renderSocial();
+ if(page==="profile")updateProfileUI();
+}
+function updateProfileUI(){
+ document.getElementById("profileName").textContent=profile.name;document.getElementById("profileHandle").textContent="@"+profile.handle.replace(/^@/,"");document.getElementById("profileBio").textContent=profile.bio;
+ document.getElementById("profileTags").innerHTML=profile.tags.map(t=>`<span class="tag">${escapeHTML(t)}</span>`).join("");
+ document.getElementById("railProfile").textContent=profile.name[0].toUpperCase();
+}
+function escapeHTML(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function send(){
+ const input=document.getElementById("composer"),text=input.value.trim();if(!text)return;
+ const c=conversations.find(x=>x.id===selected);c.messages.push(["edwin",text,new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})]);input.value="";input.style.height="40px";renderMessages();renderConversations(document.getElementById("chatSearch").value);
+ if(document.querySelector('[data-setting="sounds"]').classList.contains("on")){}
+}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.classList.remove("show"),1800)}
+
+document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>nav(b.dataset.page));
+document.getElementById("railProfile").onclick=()=>nav("profile");
+document.getElementById("sendBtn").onclick=send;
+document.getElementById("composer").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+document.getElementById("composer").addEventListener("input",e=>{e.target.style.height="40px";e.target.style.height=Math.min(e.target.scrollHeight,130)+"px"});
+document.getElementById("chatSearch").addEventListener("input",e=>renderConversations(e.target.value));
+document.getElementById("infoBtn").onclick=()=>{const p=document.getElementById("rightPanel");p.scrollIntoView({behavior:"smooth"})};
+document.getElementById("menuBtn").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
+document.querySelectorAll(".toggle").forEach(t=>t.onclick=()=>{t.classList.toggle("on");showToast(`${t.dataset.setting} ${t.classList.contains("on")?"enabled":"disabled"}`)});
+document.getElementById("editProfile").onclick=()=>{document.getElementById("editName").value=profile.name;document.getElementById("editHandle").value=profile.handle;document.getElementById("editBio").value=profile.bio;document.getElementById("editTags").value=profile.tags.join(", ");document.getElementById("modalBack").classList.add("open")};
+document.getElementById("closeModal").onclick=document.getElementById("cancelModal").onclick=()=>document.getElementById("modalBack").classList.remove("open");
+document.getElementById("saveProfile").onclick=()=>{profile={name:document.getElementById("editName").value.trim()||"Edwin",handle:document.getElementById("editHandle").value.trim().replace(/^@/,"")||"edwin",bio:document.getElementById("editBio").value.trim(),tags:document.getElementById("editTags").value.split(",").map(x=>x.trim()).filter(Boolean)};users.edwin.name=profile.name;updateProfileUI();document.getElementById("modalBack").classList.remove("open");showToast("Profile updated")};
+
+
+let profileAccent="#8b5cf6";
+let profileAvatar=null;
+let profileBanner=null;
+
+function applyProfileVisuals(){
+  const avatarEls=document.querySelectorAll("#profilePage .profile-main .avatar,#railProfile");
+  avatarEls.forEach(el=>{
+    if(profileAvatar){el.style.backgroundImage=`url("${profileAvatar}")`;el.style.backgroundSize="cover";el.style.backgroundPosition="center";el.textContent="";}
+    else {el.style.backgroundImage="";el.style.background=users.edwin.gradient;el.textContent=profile.name[0].toUpperCase();}
+  });
+  const cover=document.querySelector(".profile-cover");
+  if(profileBanner){
+    cover.style.backgroundImage=`url("${profileBanner}")`;
+    cover.style.backgroundSize="cover";cover.style.backgroundPosition="center";
+  }else{
+    cover.style.backgroundImage="";cover.style.background= `linear-gradient(120deg, ${profileAccent}55, #142a4d 52%, #10162c)`;
+  }
+  document.documentElement.style.setProperty("--accent",profileAccent);
+}
+function fileToDataURL(file,cb){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>cb(e.target.result);
+  reader.readAsDataURL(file);
+}
+document.getElementById("changeAvatar").onclick=()=>document.getElementById("avatarFile").click();
+document.getElementById("changeBanner").onclick=()=>document.getElementById("bannerFile").click();
+document.getElementById("avatarFile").onchange=e=>fileToDataURL(e.target.files[0],data=>{
+  profileAvatar=data;applyProfileVisuals();showToast("Profile photo updated");
+});
+document.getElementById("bannerFile").onchange=e=>fileToDataURL(e.target.files[0],data=>{
+  profileBanner=data;applyProfileVisuals();showToast("Profile banner updated");
+});
+document.getElementById("customizeProfile").onclick=()=>{
+  document.getElementById("editProfile").click();
+};
+document.querySelectorAll(".color-swatch").forEach(s=>s.onclick=()=>{
+  document.querySelectorAll(".color-swatch").forEach(x=>x.classList.remove("active"));
+  s.classList.add("active");profileAccent=s.dataset.accent;applyProfileVisuals();
+  document.getElementById("bannerPreview").style.background=`linear-gradient(135deg,${profileAccent},#154c72)`;
+});
+const oldSave=document.getElementById("saveProfile").onclick;
+document.getElementById("saveProfile").onclick=()=>{
+  oldSave();
+  applyProfileVisuals();
+  showToast("Profile customization saved");
+};
+const oldUpdate=updateProfileUI;
+updateProfileUI=()=>{oldUpdate();applyProfileVisuals();};
+document.getElementById("userSearch").addEventListener("input",e=>renderSocial(e.target.value));
+renderConversations();selectConversation("mika");renderGroups();renderSocial();updateProfileUI();renderRight();
+
+</script>
+
+<script>
+/* ===================== NOVA PROTOTYPE 5 =====================
+   Local account/data layer. Storage is deliberately isolated so a future API
+   can replace these functions without rewriting the UI.
+============================================================== */
+(function(){
+  const STORE_KEY='nova.prototype5.v1';
+  const SESSION_KEY='nova.prototype5.session';
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const baseUsers=clone(users);
+  const demoProfiles={
+    edwin:{name:'Edwin',handle:'edwin',bio:'just building cool stuff ✦ anime • gaming • music',tags:['Gaming','Creator','Custom Profile'],accent:'#8b5cf6',avatar:null,banner:null},
+    mika:{name:'Mika',handle:'mika',bio:'anime, art & late-night conversations ✦',tags:['Anime','Artist'],accent:'#f97316',avatar:null,banner:null},
+    jay:{name:'Jay',handle:'jay',bio:'building things and breaking them again.',tags:['Developer','Creator'],accent:'#3b82f6',avatar:null,banner:null},
+    kai:{name:'Kai',handle:'kai',bio:'music / games / good vibes',tags:['Music','Gaming'],accent:'#10b981',avatar:null,banner:null},
+    luna:{name:'Luna',handle:'luna',bio:'soft chaos ✦',tags:['Music','Anime'],accent:'#a855f7',avatar:null,banner:null}
+  };
+  const makeAccount=(id,email)=>({id,email,password:'nova123',profile:clone(demoProfiles[id]),friends:id==='edwin'?['mika']:[],requests:id==='edwin'?['luna']:[],sentRequests:[],conversations:clone(conversations),settings:{online:true,sounds:true,compact:false,dark:true},joinedGroups:[],createdAt:Date.now()});
+  function freshStore(){
+    const accounts={}; Object.keys(baseUsers).forEach(id=>accounts[id]=makeAccount(id,id+'@nova.local'));
+    return {version:1,accounts};
+  }
+  function loadStore(){
+    try{const raw=localStorage.getItem(STORE_KEY); if(raw){const parsed=JSON.parse(raw);if(parsed&&parsed.accounts)return parsed;}}catch(e){}
+    const st=freshStore(); saveStore(st); return st;
+  }
+  let store=loadStore();
+  let currentId=localStorage.getItem(SESSION_KEY)||null;
+  function saveStore(st=store){try{localStorage.setItem(STORE_KEY,JSON.stringify(st));}catch(e){console.warn('Nova storage error',e);showToast('Storage is full — try smaller images');}}
+  function account(){return currentId&&store.accounts[currentId];}
+  function saveCurrent(){if(!account())return; account().profile=clone(profile); account().conversations=clone(conversations); account().friends=clone(friends); account().requests=clone(requests); account().sentRequests=clone(sentRequests); account().settings={}; document.querySelectorAll('.toggle').forEach(t=>account().settings[t.dataset.setting]=t.classList.contains('on')); account().profile.accent=profileAccent; account().profile.avatar=profileAvatar; account().profile.banner=profileBanner; saveStore();}
+  function hydrateCurrent(){
+    const a=account(); if(!a)return false;
+    profile=clone(a.profile); profileAccent=profile.accent||'#8b5cf6'; profileAvatar=profile.avatar||null; profileBanner=profile.banner||null;
+    conversations=clone(a.conversations||[]); friends=clone(a.friends||[]); requests=clone(a.requests||[]); sentRequests=clone(a.sentRequests||[]);
+    if(!conversations.length && currentId==='edwin') conversations=clone(makeAccount('edwin','edwin@nova.local').conversations);
+    if(currentId!=='edwin') conversations.forEach(c=>c.messages?.forEach(m=>{if(m[0]==='edwin')m[0]=currentId;}));
+    users[currentId]={...(users[currentId]||baseUsers.edwin),name:profile.name,handle:'@'+profile.handle,initial:profile.name[0]?.toUpperCase()||'N'};
+    const settings=a.settings||{}; document.querySelectorAll('.toggle').forEach(t=>{const val=settings[t.dataset.setting]!==undefined?settings[t.dataset.setting]:t.classList.contains('on');t.classList.toggle('on',!!val)});
+    return true;
+  }
+  function persist(){saveCurrent();}
+  function updateSessionUI(){
+    let chip=document.getElementById('accountChip');
+    if(!chip){chip=document.createElement('div');chip.id='accountChip';chip.className='account-chip';const mini=document.querySelector('.rail');mini?.appendChild(chip);}
+    if(account()) chip.innerHTML=`<div class="avatar" style="background:${users[currentId]?.gradient||'linear-gradient(135deg,#7c3aed,#0ea5e9)'}">${escapeHTML(profile.name[0]||'N')}</div><div class="account-text"><strong>${escapeHTML(profile.name)}</strong><span>@${escapeHTML(profile.handle)}</span></div><span class="logout-mini" title="Log out">↪</span>`;
+    chip.onclick=()=>{if(confirm('Log out of this Nova account?'))logout()};
+  }
+  function openAuth(mode='login'){
+    document.getElementById('authOverlay').classList.remove('hidden');setAuthMode(mode);
+  }
+  function closeAuth(){document.getElementById('authOverlay').classList.add('hidden')}
+  function setAuthMode(mode){
+    const login=mode==='login';document.getElementById('loginTab').classList.toggle('active',login);document.getElementById('signupTab').classList.toggle('active',!login);
+    document.getElementById('authNameWrap').style.display=login?'none':'';document.getElementById('authHandleWrap').style.display=login?'none':'';
+    document.getElementById('authSubmit').textContent=login?'Log in':'Create account';document.getElementById('authError').textContent='';document.getElementById('authForm').dataset.mode=mode;
+  }
+  function login(email,password){
+    const a=Object.values(store.accounts).find(x=>x.email.toLowerCase()===email.toLowerCase());
+    if(!a||a.password!==password)return 'Incorrect email or password.';
+    currentId=a.id;localStorage.setItem(SESSION_KEY,currentId);hydrateCurrent();closeAuth();bootUI();showToast('Welcome back to Nova');return '';
+  }
+  function signup(name,email,password,handle){
+    email=email.trim().toLowerCase();handle=(handle||name).trim().toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,24);name=name.trim();
+    if(!name)return 'Enter a display name.';if(password.length<6)return 'Password must be at least 6 characters.';
+    if(Object.values(store.accounts).some(a=>a.email.toLowerCase()===email))return 'That email is already registered.';
+    if(Object.values(store.accounts).some(a=>a.profile.handle.toLowerCase()===handle))return 'That handle is already taken.';
+    const id='u_'+Date.now().toString(36);store.accounts[id]=makeAccount('edwin',email);store.accounts[id].id=id;store.accounts[id].password=password;store.accounts[id].profile={name,handle,bio:'New to Nova ✦',tags:['New here'],accent:'#8b5cf6',avatar:null,banner:null};store.accounts[id].friends=[];store.accounts[id].requests=[];store.accounts[id].sentRequests=[];store.accounts[id].conversations=[];saveStore();currentId=id;localStorage.setItem(SESSION_KEY,id);hydrateCurrent();closeAuth();bootUI();showToast('Welcome to Nova');return '';
+  }
+  function logout(){saveCurrent();currentId=null;localStorage.removeItem(SESSION_KEY);document.getElementById('authOverlay').classList.remove('hidden');setAuthMode('login');document.getElementById('authEmail').value='';document.getElementById('authPassword').value='';}
+  window.logout=logout;
+  function bootUI(){
+    users[currentId]={...(users[currentId]||baseUsers.edwin),name:profile.name,handle:'@'+profile.handle,initial:profile.name[0]?.toUpperCase()||'N'};
+    updateSessionUI();applyProfileVisuals();updateProfileUI();renderConversations();renderGroups();renderSocial();renderRight();selectConversation(selected&&conversations.some(c=>c.id===selected)?selected:(conversations[0]?.id||''));
+  }
+  // Auth controls
+  document.getElementById('loginTab').onclick=()=>setAuthMode('login');document.getElementById('signupTab').onclick=()=>setAuthMode('signup');
+  document.getElementById('authForm').onsubmit=e=>{e.preventDefault();const mode=e.currentTarget.dataset.mode||'login';const err=mode==='login'?login(document.getElementById('authEmail').value,document.getElementById('authPassword').value):signup(document.getElementById('authName').value,document.getElementById('authEmail').value,document.getElementById('authPassword').value,document.getElementById('authHandle').value);document.getElementById('authError').textContent=err};
+
+  // Replace persistence-sensitive handlers.
+  window.send=function(){
+    const input=document.getElementById('composer'),text=input.value.trim();if(!text)return;
+    const c=conversations.find(x=>x.id===selected);if(!c)return;
+    c.messages.push([currentId,text,new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})]);
+    input.value='';input.style.height='40px';renderMessages();renderConversations(document.getElementById('chatSearch').value);persist();
+  };
+  window.sendFriendRequest=function(id){if(!sentRequests.includes(id))sentRequests.push(id);persist();renderSocial(document.getElementById('userSearch').value);showToast(`Friend request sent to ${users[id].name}`)};
+  window.acceptRequest=function(id){requests=requests.filter(x=>x!==id);if(!friends.includes(id))friends.push(id);persist();renderSocial(document.getElementById('userSearch').value);showToast(`${users[id].name} is now your friend`)};
+  window.declineRequest=function(id){requests=requests.filter(x=>x!==id);persist();renderSocial(document.getElementById('userSearch').value);showToast('Request declined')};
+  window.openDM=function(id){if(!conversations.some(c=>c.id===id))conversations.push({id,type:'dm',user:id,messages:[[id,`Hey! You can message me here on Nova. 👋`,'Now']]});persist();selectConversation(id)};
+  // Profile save + uploads
+  document.getElementById('saveProfile').onclick=()=>{
+    profile={name:document.getElementById('editName').value.trim()||'Nova User',handle:document.getElementById('editHandle').value.trim().replace(/^@/,'')||'novauser',bio:document.getElementById('editBio').value.trim(),tags:document.getElementById('editTags').value.split(',').map(x=>x.trim()).filter(Boolean),accent:profileAccent,avatar:profileAvatar,banner:profileBanner};
+    users[currentId].name=profile.name;users[currentId].handle='@'+profile.handle;users[currentId].initial=profile.name[0].toUpperCase();persist();updateProfileUI();applyProfileVisuals();document.getElementById('modalBack').classList.remove('open');showToast('Profile saved');
+  };
+  document.getElementById('avatarFile').onchange=e=>fileToDataURL(e.target.files[0],data=>{profileAvatar=data;persist();applyProfileVisuals();showToast('Profile photo saved')});
+  document.getElementById('bannerFile').onchange=e=>fileToDataURL(e.target.files[0],data=>{profileBanner=data;persist();applyProfileVisuals();showToast('Profile banner saved')});
+  document.querySelectorAll('.color-swatch').forEach(s=>s.onclick=()=>{document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));s.classList.add('active');profileAccent=s.dataset.accent;profile.accent=profileAccent;persist();applyProfileVisuals();document.getElementById('bannerPreview').style.background=`linear-gradient(135deg,${profileAccent},#154c72)`});
+  document.querySelectorAll('.toggle').forEach(t=>t.onclick=()=>{t.classList.toggle('on');persist();showToast(`${t.dataset.setting} ${t.classList.contains('on')?'enabled':'disabled'}`)});
+  document.querySelectorAll('.join').forEach(btn=>btn.addEventListener('click',()=>persist()));
+
+  // Keep group membership persistent by replacing renderGroups.
+  window.renderGroups=function(){
+    const joined=account()?.joinedGroups||[];
+    document.getElementById('groupsGrid').innerHTML=groups.map(g=>{const isJoined=joined.includes(g.id);return `<div class="card"><div class="group-icon">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="card-foot"><span class="members">${g.members+(isJoined?1:0)} members</span><button class="${isJoined?'secondary':'primary'} join" data-group="${g.id}">${isJoined?'Joined':'Join'}</button></div></div>`}).join('');
+    document.querySelectorAll('.join').forEach(btn=>btn.onclick=()=>{const id=btn.dataset.group;const a=account();a.joinedGroups=a.joinedGroups||[];if(a.joinedGroups.includes(id)){a.joinedGroups=a.joinedGroups.filter(x=>x!==id);btn.textContent='Join';btn.className='primary join';showToast('Left group')}else{a.joinedGroups.push(id);btn.textContent='Joined';btn.className='secondary join';showToast('Joined group')}persist()});
+  };
+
+  // Patch conversation selection to persist the last-opened conversation.
+  const oldSelect=selectConversation; window.selectConversation=function(id){oldSelect(id);if(account()){account().lastConversation=id;saveStore()}};
+
+  // Existing startup should now be gated by the account session.
+  function start(){
+    if(currentId&&store.accounts[currentId]){hydrateCurrent();closeAuth();bootUI();}
+    else openAuth('login');
+  }
+  start();
+})();
+</script>
+
+<script>
+/* NOVA PROTOTYPE 5 — SERVER MODE
+   The UI remains the Prototype 4/5 surface. This layer replaces browser-only
+   persistence with the Nova HTTP API + SQLite session/state store.
+*/
+(function(){
+  const api=async(path,options={})=>{
+    const r=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(options.headers||{})},...options});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'Nova server request failed.');
+    return data;
+  };
+  let serverUser=null;
+  let syncing=false;
+  let saveTimer=null;
+
+  function applyState(state){
+    if(!state)return;
+    profile=JSON.parse(JSON.stringify(state.profile||profile));
+    profileAccent=profile.accent||'#8b5cf6'; profileAvatar=profile.avatar||null; profileBanner=profile.banner||null;
+    conversations=JSON.parse(JSON.stringify(state.conversations||[]));
+    friends=JSON.parse(JSON.stringify(state.friends||[]));
+    requests=JSON.parse(JSON.stringify(state.requests||[]));
+    sentRequests=JSON.parse(JSON.stringify(state.sentRequests||[]));
+    window.novaServerSettings=state.settings||{}; window.novaJoinedGroups=JSON.parse(JSON.stringify(state.joinedGroups||[]));
+    Object.entries(window.novaServerSettings).forEach(([k,v])=>document.querySelectorAll('.toggle[data-setting="'+k+'"]').forEach(t=>t.classList.toggle('on',!!v)));
+    if(state.lastConversation) selected=state.lastConversation;
+  }
+  function collectState(){
+    const settings={}; document.querySelectorAll('.toggle').forEach(t=>settings[t.dataset.setting]=t.classList.contains('on'));
+    return {profile,conversations,friends,requests,sentRequests,settings,joinedGroups:window.novaJoinedGroups||[],lastConversation:selected||''};
+  }
+  async function persistServer(immediate=false){
+    if(!serverUser || syncing)return;
+    clearTimeout(saveTimer);
+    const run=async()=>{try{await api('/api/state',{method:'PUT',body:JSON.stringify(collectState())});}catch(e){showToast(e.message);}};
+    if(immediate) await run(); else saveTimer=setTimeout(run,180);
+  }
+  function refreshUI(){
+    users[serverUser.id]={...(users[serverUser.id]||{}),name:profile.name,handle:'@'+profile.handle,initial:(profile.name||'N')[0].toUpperCase()};
+    applyProfileVisuals(); updateProfileUI(); renderConversations(); renderGroups(); renderSocial(); renderRight();
+    if(selected && conversations.some(c=>c.id===selected)) selectConversation(selected); else if(conversations[0]) selectConversation(conversations[0].id);
+  }
+  function showLoggedIn(){
+    document.getElementById('authOverlay')?.classList.add('hidden');
+    refreshUI();
+  }
+  function showLoggedOut(){
+    serverUser=null; document.getElementById('authOverlay')?.classList.remove('hidden');
+    document.getElementById('authEmail').value=''; document.getElementById('authPassword').value='';
+    document.getElementById('authError').textContent='';
+  }
+
+  async function loginServer(email,password){
+    try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});serverUser=d.user;applyState(d.state);showLoggedIn();showToast('Welcome back to Nova');}
+    catch(e){document.getElementById('authError').textContent=e.message;}
+  }
+  async function signupServer(name,email,password,handle){
+    try{const d=await api('/api/auth/signup',{method:'POST',body:JSON.stringify({name,email,password,handle})});serverUser=d.user;applyState(d.state);showLoggedIn();showToast('Welcome to Nova');}
+    catch(e){document.getElementById('authError').textContent=e.message;}
+  }
+  async function logoutServer(){await persistServer(true);try{await api('/api/auth/logout',{method:'POST'});}catch(e){}showLoggedOut();}
+
+  /* Auth is now handled by the server, not localStorage. */
+  document.getElementById('authForm').onsubmit=async e=>{
+    e.preventDefault();
+    const mode=e.currentTarget.dataset.mode||'login';
+    document.getElementById('authError').textContent='';
+    if(mode==='login') await loginServer(document.getElementById('authEmail').value,document.getElementById('authPassword').value);
+    else await signupServer(document.getElementById('authName').value,document.getElementById('authEmail').value,document.getElementById('authPassword').value,document.getElementById('authHandle').value);
+  };
+
+  window.send=async function(){
+    const input=document.getElementById('composer'),text=input.value.trim();if(!text)return;
+    const c=conversations.find(x=>x.id===selected);if(!c)return;
+    c.messages=c.messages||[]; c.messages.push([serverUser.id,text,new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})]);
+    input.value='';input.style.height='40px';renderMessages();renderConversations(document.getElementById('chatSearch')?.value||'');await persistServer();
+  };
+  window.sendFriendRequest=async id=>{if(!sentRequests.includes(id))sentRequests.push(id);await persistServer();renderSocial(document.getElementById('userSearch')?.value||'');showToast(`Friend request sent to ${users[id]?.name||id}`)};
+  window.acceptRequest=async id=>{requests=requests.filter(x=>x!==id);if(!friends.includes(id))friends.push(id);await persistServer();renderSocial(document.getElementById('userSearch')?.value||'');showToast(`${users[id]?.name||id} is now your friend`)};
+  window.declineRequest=async id=>{requests=requests.filter(x=>x!==id);await persistServer();renderSocial(document.getElementById('userSearch')?.value||'');showToast('Request declined')};
+  window.openDM=async id=>{if(!conversations.some(c=>c.id===id))conversations.push({id,type:'dm',user:id,messages:[[id,'Hey! You can message me here on Nova. 👋','Now']]});await persistServer(true);selectConversation(id)};
+
+  document.getElementById('saveProfile').onclick=async()=>{
+    profile={name:document.getElementById('editName').value.trim()||'Nova User',handle:document.getElementById('editHandle').value.trim().replace(/^@/,'')||'novauser',bio:document.getElementById('editBio').value.trim(),tags:document.getElementById('editTags').value.split(',').map(x=>x.trim()).filter(Boolean),accent:profileAccent,avatar:profileAvatar,banner:profileBanner};
+    await persistServer(true); updateProfileUI();applyProfileVisuals();document.getElementById('modalBack').classList.remove('open');showToast('Profile saved');
+  };
+  document.getElementById('avatarFile').onchange=e=>fileToDataURL(e.target.files[0],async data=>{profileAvatar=data;profile.avatar=data;await persistServer(true);applyProfileVisuals();showToast('Profile photo saved')});
+  document.getElementById('bannerFile').onchange=e=>fileToDataURL(e.target.files[0],async data=>{profileBanner=data;profile.banner=data;await persistServer(true);applyProfileVisuals();showToast('Profile banner saved')});
+  document.querySelectorAll('.color-swatch').forEach(s=>s.onclick=async()=>{document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));s.classList.add('active');profileAccent=s.dataset.accent;profile.accent=profileAccent;await persistServer();applyProfileVisuals();document.getElementById('bannerPreview').style.background=`linear-gradient(135deg,${profileAccent},#154c72)`});
+  document.querySelectorAll('.toggle').forEach(t=>t.onclick=async()=>{t.classList.toggle('on');await persistServer();showToast(`${t.dataset.setting} ${t.classList.contains('on')?'enabled':'disabled'}`)});
+
+  window.renderGroups=function(){
+    const joined=window.novaJoinedGroups||[];
+    document.getElementById('groupsGrid').innerHTML=groups.map(g=>{const isJoined=joined.includes(g.id);return `<div class="card"><div class="group-icon">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="card-foot"><span class="members">${g.members+(isJoined?1:0)} members</span><button class="${isJoined?'secondary':'primary'} join" data-group="${g.id}">${isJoined?'Joined':'Join'}</button></div></div>`}).join('');
+    document.querySelectorAll('.join').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.group;const set=new Set(window.novaJoinedGroups||[]);set.has(id)?set.delete(id):set.add(id);window.novaJoinedGroups=[...set];await persistServer(true);renderGroups();showToast(set.has(id)?'Joined group':'Left group')});
+  };
+
+  const originalSelect=window.selectConversation;
+  window.selectConversation=function(id){originalSelect(id);selected=id;persistServer();};
+
+  document.addEventListener('click',e=>{if(e.target.closest('#logoutBtn')||e.target.closest('#accountChip')||e.target.closest('.logout-mini'))logoutServer();});
+
+  (async function bootServer(){
+    try{
+      const me=await api('/api/auth/me');
+      if(!me.authenticated){showLoggedOut();return;}
+      serverUser=me.user;
+      const all=await api('/api/users');
+      all.forEach(u=>{users[u.id]={...(users[u.id]||{}),...u,name:u.name,handle:u.handle,initial:(u.name||'N')[0].toUpperCase()};});
+      applyState(me.state); showLoggedIn();
+    }catch(e){document.getElementById('authError').textContent='Nova server is unavailable. Start the backend and refresh.';showLoggedOut();}
+  })();
+})();
+</script>
+</body>
+</html><script>
+/* NOVA FULL STACK CLIENT — relational API + realtime WebSocket layer */
+(()=>{
+  const api=async(path,opt={})=>{const r=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json',...(opt.headers||{})},...opt});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Nova request failed');return d};
+  let me=null, ws=null, requestRows=[];
+  const state={users:{},conversations:[],groups:[],profile:null,friends:[],requests:[],sentRequests:[],joinedGroups:[],settings:{}};
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  const user=id=>state.users[id]||users[id]||{id,name:'Nova User',handle:'@nova',bio:'',initial:'N',gradient:'linear-gradient(135deg,#7c3aed,#0ea5e9)',online:false};
+  function hydrate(d){
+    me=d.user; state.users={}; (d.users||[]).forEach(u=>state.users[u.id]={...u,initial:(u.name||'N')[0].toUpperCase(),gradient:`linear-gradient(135deg,${u.accent||'#7c3aed'},#0ea5e9)`});
+    if(me && !state.users[me.id]) state.users[me.id]={id:me.id,name:'Nova User',handle:'@nova',initial:'N',accent:'#8b5cf6'};
+    state.profile=clone(d.state?.profile||{});state.friends=clone(d.state?.friends||[]);state.requests=clone(d.state?.requests||[]);state.sentRequests=clone(d.state?.sentRequests||[]);state.joinedGroups=clone(d.state?.joinedGroups||[]);state.settings=clone(d.state?.settings||{});state.conversations=clone(d.conversations||[]);state.groups=clone(d.groups||groups);
+    profile=clone(state.profile);profileAccent=profile.accent||'#8b5cf6';profileAvatar=profile.avatar||null;profileBanner=profile.banner||null;
+    friends=state.friends;requests=state.requests;sentRequests=state.sentRequests;window.novaJoinedGroups=state.joinedGroups;
+    Object.assign(users,state.users); users.edwin={...(users.edwin||{}),...(state.users[me.id]||{}),name:state.profile.name,handle:'@'+state.profile.handle,initial:(state.profile.name||'N')[0].toUpperCase()};
+  }
+  function conversationKey(id,type){return type==='group'?`group_${id}`:`dm_${[me.id,id].sort().join('__')}`}
+  function avatarFor(id,cls='sm'){const u=user(id);return `<div class="avatar ${cls}" style="background:${u.avatar?`url('${u.avatar}') center/cover`:u.gradient||'linear-gradient(135deg,#7c3aed,#0ea5e9)'};position:relative">${u.avatar?'':(u.initial||u.name?.[0]||'N')}${u.online&&cls!=='lg'?'<i class="status-dot"></i>':''}</div>`}
+  function renderAll(){renderConversations(document.getElementById('chatSearch')?.value||'');renderGroups();renderSocial(document.getElementById('userSearch')?.value||'');updateProfileUI();applyProfileVisuals();if(selected && state.conversations.some(c=>c.id===selected)) selectConversation(selected);else if(state.conversations[0]) selectConversation(state.conversations[0].id);}
+  window.renderConversations=function(filter=''){
+    conversations=state.conversations;
+    const q=filter.toLowerCase();
+    const dms=state.conversations.filter(c=>c.type==='dm'&&((user(c.user).name+' '+user(c.user).handle).toLowerCase().includes(q)));
+    document.getElementById('conversationList').innerHTML=dms.map(c=>{const u=user(c.user),last=c.messages.at(-1);return `<div class="conv ${selected===c.id?'active':''}" data-conv="${c.id}">${avatarFor(c.user)}<div class="conv-info"><div class="conv-top"><span class="conv-name">${u.name}</span><span class="time">${last?.[2]||''}</span></div><div class="preview">${escapeHTML(last?.[1]||'')}</div></div></div>`}).join('');
+    document.getElementById('groupList').innerHTML=state.conversations.filter(c=>c.type==='group').map(c=>{const g=state.groups.find(x=>x.id===c.id)||groups.find(x=>x.id===c.id),last=c.messages.at(-1);return `<div class="conv ${selected===c.id?'active':''}" data-conv="${c.id}"><div class="avatar sm" style="background:linear-gradient(135deg,#6d42d8,#1e9bc7)">${g?.icon||'✦'}</div><div class="conv-info"><div class="conv-top"><span class="conv-name">${g?.name||c.name||c.id}</span><span class="time">${last?.[2]||''}</span></div><div class="preview">${escapeHTML(last?.[1]||'')}</div></div></div>`}).join('');
+    document.querySelectorAll('[data-conv]').forEach(x=>x.onclick=()=>selectConversation(x.dataset.conv));
+  };
+  window.selectConversation=function(id){selected=id;const c=state.conversations.find(x=>x.id===id);if(!c)return;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('messagesPage').classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='messages'));const g=state.groups.find(x=>x.id===id),u=c.type==='dm'?user(c.user):null;document.getElementById('headerAvatar').textContent=c.type==='group'?(g?.icon||'✦'):(u?.initial||'N');document.getElementById('headerAvatar').style.background=c.type==='group'?'linear-gradient(135deg,#6d42d8,#1e9bc7)':(u?.gradient||'linear-gradient(135deg,#7c3aed,#0ea5e9)');document.getElementById('headerName').textContent=c.type==='group'?(g?.name||c.name):u.name;document.getElementById('headerSub').textContent=c.type==='group'?`${g?.members||0} members · active now`:(u.online?'Online now':'Last seen recently');document.getElementById('composer').placeholder=`Message ${c.type==='group'?(g?.name||c.name):u.name}...`;renderMessages();renderConversations(document.getElementById('chatSearch')?.value||'');renderRight();document.getElementById('sidebar').classList.remove('open');};
+  window.renderMessages=function(){const c=state.conversations.find(x=>x.id===selected);if(!c)return;document.getElementById('messages').innerHTML='<div class="day">Today</div>'+c.messages.map(m=>{const u=user(m[0]),mine=m[0]===me.id;return `<div class="message ${mine?'mine':''}">${avatarFor(m[0])}<div class="bubble-wrap"><div class="meta"><strong>${u.name}</strong><span>${m[2]}</span></div><div class="bubble">${escapeHTML(m[1])}</div></div></div>`}).join('');document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight;};
+  window.renderRight=function(){const c=state.conversations.find(x=>x.id===selected);if(!c)return;const title=document.getElementById('rightTitle'),content=document.getElementById('rightContent');if(c.type==='group'){const g=state.groups.find(x=>x.id===c.id);title.textContent='Group';content.innerHTML=`<div class="profile-mini"><div class="banner-mini"></div><div class="avatar" style="background:linear-gradient(135deg,#6d42d8,#1e9bc7);margin:auto;position:relative">${g?.icon||'✦'}</div><h3>${g?.name||c.name}</h3><div class="handle">${g?.members||0} members</div><div class="bio">${g?.desc||''}</div><div class="tags"><span class="tag">Community</span><span class="tag">Public</span></div></div>`}else{const u=user(c.user);title.textContent='About';content.innerHTML=`<div class="profile-mini"><div class="banner-mini"></div>${avatarFor(c.user,'lg')}<h3>${u.name}</h3><div class="handle">${u.handle}</div><div class="bio">${u.bio||''}</div><div class="tags"><span class="tag">${state.friends.includes(c.user)?'Friend':'Nova member'}</span><span class="tag">${u.online?'Online':'Offline'}</span></div></div>`}};
+  window.renderGroups=function(){document.getElementById('groupsGrid').innerHTML=state.groups.map(g=>{const joined=state.joinedGroups.includes(g.id);return `<div class="card"><div class="group-icon">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="card-foot"><span class="members">${g.members+(joined?1:0)} members</span><button class="${joined?'secondary':'primary'} join" data-group="${g.id}">${joined?'Joined':'Join'}</button></div></div>`}).join('');document.querySelectorAll('.join').forEach(b=>b.onclick=async()=>{const gid=b.dataset.group;const joined=state.joinedGroups.includes(gid);try{await api(`/api/groups/${gid}/join`,{method:joined?'DELETE':'POST'});state.joinedGroups=joined?state.joinedGroups.filter(x=>x!==gid):[...state.joinedGroups,gid];const cid=gid;if(!joined&&!state.conversations.some(c=>c.id===cid))state.conversations.push({id:cid,type:'group',name:state.groups.find(x=>x.id===gid)?.name,messages:[]});renderGroups();renderConversations();showToast(joined?'Left group':'Joined group')}catch(e){showToast(e.message)}})};
+  window.renderSocial=function(filter=''){const q=filter.toLowerCase().replace(/^@/,'');const people=Object.keys(state.users).filter(id=>id!==me.id&&(state.users[id].name.toLowerCase().includes(q)||state.users[id].handle.toLowerCase().includes(q)));const req=document.getElementById('requests');req.innerHTML=state.requests.map(id=>{const u=user(id);const rr=requestRows.find(x=>x.from_user===id);return `<div class="request">${avatarFor(id)}<div class="request-info"><b>${u.name}</b><span>${u.handle} wants to be your friend</span></div><div class="request-actions"><button class="accept" onclick="acceptRequest('${rr?.id||id}')">Accept</button><button class="decline" onclick="declineRequest('${rr?.id||id}')">Decline</button></div></div>`}).join('')||'<div class="empty-social">No pending friend requests.</div>';document.getElementById('friendsGrid').innerHTML=state.friends.map(id=>`<div class="user-card">${avatarFor(id,'lg')}<div class="user-card-info"><h3>${user(id).name}</h3><p>${user(id).handle} · ${user(id).bio||''}</p></div><div class="user-actions"><button class="secondary" onclick="openDM('${id}')">Message</button></div></div>`).join('')||'<div class="empty-social">Your friend list is empty.</div>';const discover=people.filter(id=>!state.friends.includes(id)&&!state.requests.includes(id));document.getElementById('discoverGrid').innerHTML=discover.map(id=>{const sent=state.sentRequests.includes(id);return `<div class="user-card">${avatarFor(id,'lg')}<div class="user-card-info"><h3>${user(id).name}</h3><p>${user(id).handle} · ${user(id).bio||''}</p></div><div class="user-actions">${sent?'<span class="friend-status">Request sent</span>':`<button class="primary" onclick="sendFriendRequest('${id}')">Add friend</button>`}</div></div>`}).join('')||'<div class="empty-social">No people found.</div>'};
+  window.sendFriendRequest=async id=>{try{await api('/api/friends/request',{method:'POST',body:JSON.stringify({userId:id})});state.sentRequests.push(id);renderSocial(document.getElementById('userSearch').value);showToast(`Friend request sent to ${user(id).name}`)}catch(e){showToast(e.message)}};
+  window.acceptRequest=async rid=>{try{await api(`/api/friends/request/${rid}/accept`,{method:'POST'});await reload();showToast('Friend request accepted')}catch(e){showToast(e.message)}};
+  window.declineRequest=async rid=>{try{await api(`/api/friends/request/${rid}/decline`,{method:'POST'});await reload();showToast('Request declined')}catch(e){showToast(e.message)}};
+  window.openDM=async id=>{try{const d=await api(`/api/dms/${id}`,{method:'POST'});const c=d.conversation;if(!state.conversations.some(x=>x.id===c.id))state.conversations.push(c);selected=c.id;selectConversation(c.id)}catch(e){showToast(e.message)}};
+  window.send=async()=>{const input=document.getElementById('composer'),body=input.value.trim();if(!body)return;const c=state.conversations.find(x=>x.id===selected);if(!c)return;const conversationId=conversationKey(c.id,c.type);try{const d=await api('/api/messages',{method:'POST',body:JSON.stringify({conversationId,body})});const t=new Date(d.message.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});c.messages.push([me.id,body,t]);input.value='';input.style.height='40px';renderMessages();renderConversations(document.getElementById('chatSearch').value)}catch(e){showToast(e.message)}};
+  document.getElementById('saveProfile').onclick=async()=>{const p={name:document.getElementById('editName').value.trim()||'Nova User',handle:document.getElementById('editHandle').value.trim().replace(/^@/,'')||'novauser',bio:document.getElementById('editBio').value.trim(),tags:document.getElementById('editTags').value.split(',').map(x=>x.trim()).filter(Boolean),accent:profileAccent,avatar:profileAvatar,banner:profileBanner};try{const d=await api('/api/profile',{method:'PUT',body:JSON.stringify(p)});state.profile=d.profile;profile=clone(d.profile);state.users[me.id]={...state.users[me.id],...d.profile,handle:'@'+d.profile.handle,name:d.profile.name};users.edwin={...users.edwin,...state.users[me.id],initial:d.profile.name[0].toUpperCase()};updateProfileUI();applyProfileVisuals();document.getElementById('modalBack').classList.remove('open');showToast('Profile saved')}catch(e){showToast(e.message)}};
+  document.getElementById('avatarFile').onchange=e=>fileToDataURL(e.target.files[0],async data=>{profileAvatar=data;try{await api('/api/profile',{method:'PUT',body:JSON.stringify({...profile,avatar:data})});profile.avatar=data;state.profile.avatar=data;applyProfileVisuals();showToast('Profile photo saved')}catch(err){showToast(err.message)}});
+  document.getElementById('bannerFile').onchange=e=>fileToDataURL(e.target.files[0],async data=>{profileBanner=data;try{await api('/api/profile',{method:'PUT',body:JSON.stringify({...profile,banner:data})});profile.banner=data;state.profile.banner=data;applyProfileVisuals();showToast('Profile banner saved')}catch(err){showToast(err.message)}});
+  document.querySelectorAll('.color-swatch').forEach(s=>s.onclick=async()=>{document.querySelectorAll('.color-swatch').forEach(x=>x.classList.remove('active'));s.classList.add('active');profileAccent=s.dataset.accent;profile.accent=profileAccent;await api('/api/profile',{method:'PUT',body:JSON.stringify({accent:profileAccent})});applyProfileVisuals();document.getElementById('bannerPreview').style.background=`linear-gradient(135deg,${profileAccent},#154c72)`});
+  document.querySelectorAll('.toggle').forEach(t=>t.onclick=async()=>{t.classList.toggle('on');await api('/api/settings',{method:'PUT',body:JSON.stringify({[t.dataset.setting]:t.classList.contains('on')})});showToast(`${t.dataset.setting} ${t.classList.contains('on')?'enabled':'disabled'}`)});
+  async function loadRequests(){requestRows=await api('/api/friends/requests').then(x=>x.requests||[]).catch(()=>[])}
+  async function reload(){const d=await api('/api/bootstrap');hydrate(d);await loadRequests();renderAll();}
+  function connectRealtime(){if(ws)try{ws.close()}catch{};const proto=location.protocol==='https:'?'wss':'ws';ws=new WebSocket(`${proto}://${location.host}/ws`);ws.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.type==='message'){const cid=m.conversationId.startsWith('group_')?m.conversationId.replace('group_',''):m.conversationId.replace(`dm_${[me.id,m.message.senderId].sort().join('__')}`,'');const c=state.conversations.find(x=>x.id===cid||conversationKey(x.id,x.type)===m.conversationId);if(c&&m.message.senderId!==me.id){c.messages.push([m.message.senderId,m.message.body,new Date(m.message.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})]);renderMessages();renderConversations(document.getElementById('chatSearch').value);if(state.settings.sounds)try{new AudioContext().resume()}catch{}}}else if(m.type==='presence'){Object.values(state.users).forEach(u=>u.online=m.online.includes(u.id));renderConversations();renderSocial();if(selected)renderRight()}else if(m.type==='friend_request'||m.type==='friend_request_accepted'){reload()}}catch{}};ws.onclose=()=>setTimeout(()=>{if(me)connectRealtime()},2500)}
+  async function login(email,password){try{const d=await api('/api/auth/login',{method:'POST',body:JSON.stringify({email,password})});me=d.user;await reload();document.getElementById('authOverlay').classList.add('hidden');connectRealtime();showToast('Welcome back to Nova')}catch(e){document.getElementById('authError').textContent=e.message}}
+  async function signup(name,email,password,handle){try{const d=await api('/api/auth/signup',{method:'POST',body:JSON.stringify({name,email,password,handle})});me=d.user;await reload();document.getElementById('authOverlay').classList.add('hidden');connectRealtime();showToast('Welcome to Nova')}catch(e){document.getElementById('authError').textContent=e.message}}
+  document.getElementById('authForm').onsubmit=async e=>{e.preventDefault();document.getElementById('authError').textContent='';const mode=e.currentTarget.dataset.mode||'login';if(mode==='login')return login(document.getElementById('authEmail').value,document.getElementById('authPassword').value);return signup(document.getElementById('authName').value,document.getElementById('authEmail').value,document.getElementById('authPassword').value,document.getElementById('authHandle').value)};
+  document.addEventListener('click',async e=>{if(e.target.closest('#logoutBtn')||e.target.closest('.logout-mini')){try{await api('/api/auth/logout',{method:'POST'})}catch{}if(ws)ws.close();me=null;document.getElementById('authOverlay').classList.remove('hidden');setAuthMode('login')}});
+  (async()=>{try{const m=await api('/api/auth/me');if(!m.authenticated){document.getElementById('authOverlay').classList.remove('hidden');return}me=m.user;await reload();document.getElementById('authOverlay').classList.add('hidden');connectRealtime()}catch{document.getElementById('authOverlay').classList.remove('hidden')}})();
+})();
+</script>
