@@ -1,11 +1,11 @@
 FROM node:22-bookworm-slim
 WORKDIR /app
-COPY backend/package*.json ./backend/
-RUN cd backend && npm ci --omit=dev
+COPY package*.json ./
+RUN npm ci --omit=dev
 COPY . .
 ENV NODE_ENV=production
 ENV PORT=3000
-ENV NOVA_DATA_DIR=/app/backend/data
-RUN mkdir -p /app/backend/data
+ENV NOVA_DATA_DIR=/var/data
+RUN mkdir -p /var/data
 EXPOSE 3000
-CMD ["node","backend/server.js"]
+CMD ["node","server.js"]
