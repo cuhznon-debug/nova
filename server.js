@@ -194,9 +194,8 @@ app.post('/api/messages',requireAuth,(req,res)=>{const conversationId=String(req
 app.post('/api/groups/:groupId/join',requireAuth,(req,res)=>{const g=GROUPS.find(x=>x.id===req.params.groupId);if(!g)return res.status(404).json({error:'Group not found.'});db.prepare('INSERT OR IGNORE INTO group_members(group_id,user_id) VALUES(?,?)').run(g.id,req.session.userId);res.json({ok:true});});
 app.delete('/api/groups/:groupId/join',requireAuth,(req,res)=>{db.prepare('DELETE FROM group_members WHERE group_id=? AND user_id=?').run(req.params.groupId,req.session.userId);res.json({ok:true});});
 
-app.use(express.static(path.join(__dirname,'..')));
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'..','index.html')));
-
+app.use(express.static(__dirname));
+app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
 const wss=new WebSocketServer({noServer:true});
 server.on('upgrade',(req,socket,head)=>{
   if(!req.url?.startsWith('/ws')) return socket.destroy();
