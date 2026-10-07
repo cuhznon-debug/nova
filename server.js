@@ -12,6 +12,7 @@ import { SQLite3Store } from '@bleed-believer/connect-sqlite3';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 const DATA_DIR = process.env.NOVA_DATA_DIR || __dirname;
